@@ -1,4 +1,0 @@
-#!/bin/bash
-
-(cd ./cmake-build-files && make)
-./cmake-build-files/SHessYoachServer
