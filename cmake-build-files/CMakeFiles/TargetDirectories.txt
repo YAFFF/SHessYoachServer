@@ -1,0 +1,3 @@
+/Users/yaff/SHessYoachServer/cmake-build-files/CMakeFiles/SHessYoachServer.dir
+/Users/yaff/SHessYoachServer/cmake-build-files/CMakeFiles/edit_cache.dir
+/Users/yaff/SHessYoachServer/cmake-build-files/CMakeFiles/rebuild_cache.dir

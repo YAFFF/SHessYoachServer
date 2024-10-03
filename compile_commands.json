@@ -1,0 +1,14 @@
+[
+{
+  "directory": "/Users/yaff/SHessYoachServer/cmake-build-files",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DBOOST_SYSTEM_DYN_LINK -DBOOST_SYSTEM_NO_LIB -DBOOST_THREAD_DYN_LINK -DBOOST_THREAD_NO_LIB -isystem /opt/homebrew/include -std=gnu++2b -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk -o CMakeFiles/SHessYoachServer.dir/main.cpp.o -c /Users/yaff/SHessYoachServer/main.cpp",
+  "file": "/Users/yaff/SHessYoachServer/main.cpp",
+  "output": "CMakeFiles/SHessYoachServer.dir/main.cpp.o"
+},
+{
+  "directory": "/Users/yaff/SHessYoachServer/cmake-build-files",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DBOOST_SYSTEM_DYN_LINK -DBOOST_SYSTEM_NO_LIB -DBOOST_THREAD_DYN_LINK -DBOOST_THREAD_NO_LIB -isystem /opt/homebrew/include -std=gnu++2b -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk -o CMakeFiles/SHessYoachServer.dir/server.cpp.o -c /Users/yaff/SHessYoachServer/server.cpp",
+  "file": "/Users/yaff/SHessYoachServer/server.cpp",
+  "output": "CMakeFiles/SHessYoachServer.dir/server.cpp.o"
+}
+]
