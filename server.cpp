@@ -65,6 +65,8 @@ void WebSocketServer::handle_accept(beast::error_code ec, tcp::socket socket) {
                                   << std::endl;
                               return;
                             }
+                            std::cout << "Client connected successfully"
+                                      << std::endl;
 
                             // Close the WebSocket connection
                             ws.async_close(
