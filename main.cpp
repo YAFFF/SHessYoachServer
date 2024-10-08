@@ -1,52 +1,56 @@
+#include "requestParser.hpp"
+#include "sqlRequests.hpp"
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 #include <cstdlib>
-#include <functional>
 #include <iostream>
 #include <string>
 #include <thread>
+#include <vector>
 
-namespace beast = boost::beast;         // from <boost/beast.hpp>
-namespace http = beast::http;           // from <boost/beast/http.hpp>
-namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
-namespace net = boost::asio;            // from <boost/asio.hpp>
-using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
+namespace beast = boost::beast;
+namespace http = beast::http;
+namespace websocket = beast::websocket;
+namespace net = boost::asio;
+using tcp = boost::asio::ip::tcp;
 
-//------------------------------------------------------------------------------
-
-// Echoes back all received WebSocket messages
 void do_session(tcp::socket socket) {
+  SqlRequest sqlRequests("localhost", "postgres", "postgres", "SHessYoachDB",
+                         5432);
   try {
 
-    std::cout << "New connection from " << socket.remote_endpoint()
-              << std::endl;
-    // Construct the stream by moving in the socket
+    std::cout << "New connection from " << socket.remote_endpoint() << "\n";
     websocket::stream<tcp::socket> ws{std::move(socket)};
 
-    // Set a decorator to change the Server of the handshake
     ws.set_option(
         websocket::stream_base::decorator([](websocket::response_type &res) {
           res.set(http::field::server, std::string(BOOST_BEAST_VERSION_STRING) +
                                            " websocket-server-sync");
         }));
 
-    // Accept the websocket handshake
     ws.accept();
 
     for (;;) {
-      // This buffer will hold the incoming message
       beast::flat_buffer buffer;
 
-      // Read a message
       ws.read(buffer);
+      std::string message = beast::buffers_to_string(buffer.data());
+      std::cout << "Received message: " << message << "\n";
 
-      // Echo the message back
+      std::string response = "";
+      std::vector<std::string> tokens = RequestParser(message, ";").getTokens();
+      if (!tokens.empty()) {
+        if (tokens[0] == "/sql") {
+          sqlRequests.requestsDistribution(tokens);
+        }
+      }
+
+      std::cout << "Sending response: " << response << "\n";
       ws.text(ws.got_text());
-      ws.write(buffer.data());
+      ws.write(net::buffer(response));
     }
   } catch (beast::system_error const &se) {
-    // This indicates that the session was closed
     if (se.code() != websocket::error::closed)
       std::cerr << "Error: " << se.code().message() << std::endl;
   } catch (std::exception const &e) {
@@ -54,11 +58,8 @@ void do_session(tcp::socket socket) {
   }
 }
 
-//------------------------------------------------------------------------------
-
 int main(int argc, char *argv[]) {
   try {
-    // Check command line arguments.
     if (argc != 3) {
       std::cerr << "Usage: websocket-server-sync <address> <port>\n"
                 << "Example:\n"
@@ -68,21 +69,16 @@ int main(int argc, char *argv[]) {
     auto const address = net::ip::make_address(argv[1]);
     auto const port = static_cast<unsigned short>(std::atoi(argv[2]));
 
-    // The io_context is required for all I/O
     net::io_context ioc{1};
 
-    // The acceptor receives incoming connections
     tcp::acceptor acceptor{ioc, {address, port}};
     for (;;) {
-      // This will receive the new connection
       tcp::socket socket{ioc};
 
-      // Block until we get a connection
       acceptor.accept(socket);
 
       std::cout << "Accepted connection from " << socket.remote_endpoint()
-                << std::endl;
-      // Launch the session, transferring ownership of the socket
+                << "\n";
       std::thread(&do_session, std::move(socket)).detach();
     }
   } catch (const std::exception &e) {
