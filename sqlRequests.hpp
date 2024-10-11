@@ -1,17 +1,20 @@
 #ifndef sqlRequest_hpp
 #define sqlRequest_hpp
 
+#include <pqxx/pqxx>
 #include <string>
 #include <vector>
 
 class SqlRequest {
 private:
-  std::string host, user, password, dataBase;
-  int port;
   void login(int, std::string);
+  void addUser(int, std::string);
+  void removeUser(int, std::string);
+
+  pqxx::connection connection;
 
 public:
-  SqlRequest(std::string, std::string, std::string, std::string, int);
+  SqlRequest(std::string);
   void requestsDistribution(std::vector<std::string>);
 };
 

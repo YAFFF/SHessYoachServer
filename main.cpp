@@ -16,8 +16,8 @@ namespace net = boost::asio;
 using tcp = boost::asio::ip::tcp;
 
 void do_session(tcp::socket socket) {
-  SqlRequest sqlRequests("localhost", "postgres", "postgres", "SHessYoachDB",
-                         5432);
+  SqlRequest sqlRequests("dbname=SHessYoachDB user=postgres password=120804 "
+                         "hostaddr=0.0.0.0 port=5432");
   try {
 
     std::cout << "New connection from " << socket.remote_endpoint() << "\n";
