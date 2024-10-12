@@ -13,4 +13,4 @@ public:
   std::vector<std::string> getTokens();
 };
 
-#endif // !parser_hpp
+#endif // !requestParser_hpp
