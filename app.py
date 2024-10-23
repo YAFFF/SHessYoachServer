@@ -31,11 +31,24 @@ def check_build_success():
                     return True
     return False
 
+
 def build_cpp_server():
     # Запускаем процесс сборки с таймаутом
     try:
+        # Выполняем cmake для настройки проекта
+        cmake_process = subprocess.Popen(
+            ["cmake", "."], cwd="cmake-build-files", stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        cmake_process.communicate()  # Ожидаем завершения cmake
+
+        # Проверяем успешность выполнения cmake
+        if cmake_process.returncode != 0:
+            print("CMake configuration failed.")
+            return False
+
+        # Выполняем make для сборки проекта
         build_process = subprocess.Popen(
-            ["cmake", "--build", "."], cwd="cmake-build-files", stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            ["make"], cwd="cmake-build-files", stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
 
         # Ждем завершения или прерываем через timeout
@@ -47,7 +60,7 @@ def build_cpp_server():
                 print("Build process timed out after 60 seconds.")
                 return False
             time.sleep(1)
-        
+
         # Проверка успешности сборки по логам
         return check_build_success()
 
