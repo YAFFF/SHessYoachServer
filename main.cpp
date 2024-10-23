@@ -66,6 +66,9 @@ int main(int argc, char *argv[]) {
                 << "    websocket-server-sync 0.0.0.0 8080\n";
       return EXIT_FAILURE;
     }
+    else {
+        std::cout << "Server Started";
+    }
     auto const address = net::ip::make_address(argv[1]);
     auto const port = static_cast<unsigned short>(std::atoi(argv[2]));
 
