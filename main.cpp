@@ -67,7 +67,6 @@ int main(int argc, char *argv[]) {
       return EXIT_FAILURE;
     }
     std::cout << "Server Started";
-    std::cerr << "Server Started";
     auto const address = net::ip::make_address(argv[1]);
     auto const port = static_cast<unsigned short>(std::atoi(argv[2]));
 
