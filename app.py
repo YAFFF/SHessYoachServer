@@ -1,4 +1,3 @@
-# app.py
 import subprocess
 import os
 import http.client
@@ -7,27 +6,70 @@ from flask import Flask, render_template, jsonify
 from threading import Thread
 from werkzeug.serving import run_simple
 
-
 app = Flask(__name__)
 server_process = None
 server_status = "Неактивен"
 output_file_path = "server_output.txt"
+crash_file_path = "server_crash.txt"
+build_output_file = "output.txt"  # Output file created by nohup
 project_path = os.getcwd()
+build_timeout_seconds = 60  # Максимальное время на сборку
 
 # Создаем файл 'output.txt' при запуске
 with open(output_file_path, 'w') as output_file:
     output_file.write("")
 
+def check_build_success():
+    # Проверяем последние две строки файла build_output_file
+    if os.path.exists(build_output_file):
+        with open(build_output_file, 'r') as file:
+            lines = file.readlines()
+            if len(lines) >= 2:
+                last_line = lines[-1].strip()
+                second_last_line = lines[-2].strip()
+                if "[100%] Built target SHessYoachServer" in last_line or "[100%] Built target SHessYoachServer" in second_last_line:
+                    return True
+    return False
+
+def build_cpp_server():
+    # Запускаем процесс сборки с таймаутом
+    try:
+        build_process = subprocess.Popen(
+            ["cmake", "--build", "."], cwd="cmake-build-files", stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+
+        # Ждем завершения или прерываем через timeout
+        start_time = time.time()
+        while build_process.poll() is None:
+            time_elapsed = time.time() - start_time
+            if time_elapsed > build_timeout_seconds:
+                build_process.terminate()
+                print("Build process timed out after 60 seconds.")
+                return False
+            time.sleep(1)
+        
+        # Проверка успешности сборки по логам
+        return check_build_success()
+
+    except Exception as e:
+        print(f"Error during build: {e}")
+        return False
+
 def start_server():
     global server_status, server_process
     if server_status == "Неактивен":
-        server_process = subprocess.Popen(
-            ["dotnet", "run"],
-            cwd=project_path,
-            stdout=open(output_file_path, 'a'),  # 'a' означает режим добавления (append)
-            stderr=subprocess.STDOUT,
-        )
-        server_status = "Активен"
+        # Сборка C++ сервера и проверка на успех
+        if build_cpp_server():
+            server_process = subprocess.Popen(
+                ["./SHessYoachServer", "0.0.0.0", "8080"],
+                cwd="cmake-build-files",
+                stdout=open(output_file_path, 'a'),
+                stderr=subprocess.STDOUT,
+            )
+            server_status = "Активен"
+            monitor_server()  # Запуск мониторинга сервера
+        else:
+            print("Build failed or did not complete successfully.")
 
 def stop_server():
     global server_status, server_process
@@ -43,7 +85,6 @@ def has_changes():
     return local_branch != remote_branch
 
 def pull_and_restart():
-
     # Проверяем изменения
     if has_changes():
         print("Changes detected. Restarting server...")
@@ -56,6 +97,28 @@ def pull_and_restart():
         subprocess.run(['git', 'pull', '--force'], check=True)
 
         start_server()
+
+def monitor_server():
+    global server_process
+    while server_process is not None and server_process.poll() is None:
+        # Сервер активен, проверка каждые 5 секунд
+        time.sleep(5)
+
+    # Если сервер завершился, обрабатываем экстренное завершение
+    if server_process is not None and server_process.poll() is not None:
+        handle_server_crash()
+
+def handle_server_crash():
+    global server_status, server_process
+    print("Server crashed! Renaming output file and restarting...")
+
+    # Переименовываем 'server_output.txt' в 'server_crash.txt'
+    if os.path.exists(output_file_path):
+        os.rename(output_file_path, crash_file_path)
+
+    # Перезапускаем сервер
+    stop_server()
+    start_server()
 
 def run_flask():
     run_simple("0.0.0.0", 8088, app, use_reloader=False)
@@ -75,7 +138,6 @@ def get_logs():
         lines = content.split('\n')  # Split the content into lines
         last_40_lines = lines[-40:]
     return '\n'.join(last_40_lines)
-
 
 @app.route('/turn_on')
 def turn_on():
